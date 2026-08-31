@@ -1,0 +1,4 @@
+@echo off
+call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat" >nul
+out\build\sobs_tests.exe
+echo .EXITCODE=%ERRORLEVEL%

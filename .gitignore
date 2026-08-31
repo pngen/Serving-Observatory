@@ -1,0 +1,18 @@
+# Build output
+out/
+build/
+*.sobs
+*.exe
+*.obj
+*.lib
+*.pdb
+*.ilk
+*.idb
+*.dll
+*.exp
+*.o
+*.a
+*.so
+
+# Test scratch
+bench_data/
