@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <optional>
 #include <utility>
@@ -60,9 +61,18 @@ public:
     bool ok() const { return value_.has_value(); }
     explicit operator bool() const { return value_.has_value(); }
 
-    T& value() & { return *value_; }
-    const T& value() const& { return *value_; }
-    T&& value() && { return std::move(*value_); }
+    T& value() & {
+        if (!value_) throw std::runtime_error("Result::value() called on an error result");
+        return *value_;
+    }
+    const T& value() const& {
+        if (!value_) throw std::runtime_error("Result::value() called on an error result");
+        return *value_;
+    }
+    T&& value() && {
+        if (!value_) throw std::runtime_error("Result::value() called on an error result");
+        return std::move(*value_);
+    }
 
     const string& error() const { return error_; }
     string& error() { return error_; }

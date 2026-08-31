@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <filesystem>
 #include <fstream>
 #include <set>
 #include <string>
@@ -493,4 +494,10 @@ TEST(coordinator_duplicate_id_rejected) {
     CHECK_EQ(coord.accepted_count(), 1u);
 }
 
-int main() { return run_all(); }
+int main() {
+    // Ensure a writable scratch directory exists regardless of the cwd (ctest
+    // runs the test from the build directory).
+    std::error_code ec;
+    std::filesystem::create_directories("out", ec);
+    return run_all();
+}
