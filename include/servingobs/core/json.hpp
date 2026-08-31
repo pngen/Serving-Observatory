@@ -29,6 +29,11 @@ public:
     Json(i64 v) : kind_(Kind::Int), i_(v) {}
     Json(u64 v) : kind_(Kind::UInt), u_(v) {}
     Json(int v) : kind_(Kind::Int), i_(v) {}
+    Json(i8 v) : kind_(Kind::Int), i_(v) {}
+    Json(i16 v) : kind_(Kind::Int), i_(v) {}
+    Json(u8 v) : kind_(Kind::UInt), u_(v) {}
+    Json(u16 v) : kind_(Kind::UInt), u_(v) {}
+    Json(u32 v) : kind_(Kind::UInt), u_(v) {}
     Json(f64 v) : kind_(Kind::Double), d_(v) {}
     Json(string v) : kind_(Kind::String), s_(std::move(v)) {}
     Json(const char* v) : kind_(Kind::String), s_(v) {}

@@ -105,11 +105,7 @@ Observation Source::make_observation(ObsType type) const {
     o.seq = seq_ + 1;
     o.clock_domain = cfg_.clock_domain;
     o.provenance = Provenance::MEASURED;
-    // deterministic observation id
-    u64 ns = 0;
-    // combine source + seq
-    ns = static_cast<u64>(type) ^ (seq_ * 0x9e3779b97f4a7c15ULL) ^ serial_;
-    o.id = ObservationId(Id128::derive(0x4F4253, reinterpret_cast<const byte*>(&ns), sizeof(ns)));
+    o.id = derive_observation_id(o.source.raw(), o.worker.raw(), o.boot.raw(), o.seq, type);
     return o;
 }
 

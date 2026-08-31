@@ -1,0 +1,29 @@
+OBS REQUEST 1000 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1
+OBS ADMISSION 1100 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1
+OBS QUEUE_ENTER 1200 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1
+OBS QUEUE_LEAVE 1800 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1
+OBS BATCH_FORM 1900 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1 batch_size=4
+OBS BATCH_SEAL 2000 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1
+OBS DISPATCH 2100 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1
+OBS TRANSFER_START 2200 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1 bytes_h2d=1048576
+OBS TRANSFER_END 2300 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1
+OBS PREFILL_START 2400 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1 input_tokens=128
+OBS PREFILL_END 3000 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1 gpu_ms=0.5
+OBS DECODE_STEP_START 3100 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1 output_tokens=1
+OBS DECODE_STEP_END 3160 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1 gpu_ms=0.06
+OBS DECODE_STEP_START 3200 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1 output_tokens=2
+OBS DECODE_STEP_END 3260 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1 gpu_ms=0.06
+OBS KV_HIT 3400 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1 count=8
+OBS COMPLETION 3500 request=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1 outcome=completed
+
+OBS REQUEST 1000 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbb1
+OBS ADMISSION 1100 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbb1
+OBS QUEUE_ENTER 1200 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbb1
+OBS QUEUE_LEAVE 2200 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbb1
+OBS DISPATCH 2300 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbb1
+OBS PREFILL_START 2400 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbb1 input_tokens=256
+OBS RETRY 2500 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbb1 reason=preemption
+OBS PREFILL_END 3600 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbb1 gpu_ms=0.8
+OBS DECODE_STEP_START 3700 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbb1 output_tokens=1
+OBS DECODE_STEP_END 3760 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbb1
+OBS COMPLETION 4000 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbb1 outcome=completed

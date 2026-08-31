@@ -162,6 +162,19 @@ Digest observation_digest(const Observation& o) {
     return Sha256::hash(w.data());
 }
 
+ObservationId derive_observation_id(const Id128& source, const Id128& worker,
+                                      const Id128& boot, SeqNum seq, ObsType type) {
+    bytes buf;
+    auto append_id = [&](const Id128& id) { auto b = id.to_bytes(); buf.insert(buf.end(), b.begin(), b.end()); };
+    append_id(source);
+    append_id(worker);
+    append_id(boot);
+    for (int i = 7; i >= 0; --i) buf.push_back(static_cast<byte>((seq >> (i * 8)) & 0xFF));
+    buf.push_back(static_cast<byte>((static_cast<u16>(type) >> 8) & 0xFF));
+    buf.push_back(static_cast<byte>(static_cast<u16>(type) & 0xFF));
+    return ObservationId(Id128::derive(0x4F4253, buf.data(), buf.size()));
+}
+
 bytes encode_observation_payload(const Observation& o) {
     BinaryWriter w;
     write_observation(w, o);

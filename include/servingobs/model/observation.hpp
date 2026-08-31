@@ -183,6 +183,11 @@ Result<Observation> read_observation(BinaryReader& r);
 bytes encode_observation_payload(const Observation& o);
 Result<Observation> read_observation_payload(const bytes& b);
 
+// Deterministic, collision-free observation id derived from the source authority
+// and the sequence/type, so distinct boots / sources / seqs never collide.
+ObservationId derive_observation_id(const Id128& source, const Id128& worker,
+                                    const Id128& boot, SeqNum seq, ObsType type);
+
 Digest observation_digest(const Observation& o);
 
 // Decode an entry value (identifier of the payload record) into a human string.
