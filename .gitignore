@@ -14,5 +14,8 @@ build/
 *.a
 *.so
 
-# Test scratch
+# Proof / example runtime artifacts
+proof_run/
+proof_run_clean/
+examples/*.sobs
 bench_data/
