@@ -1,0 +1,1 @@
+See EXAMPLES.md at the repository root for the runnable example catalog. Run `examples\run_examples.cmd` (Windows) or invoke the listed `obscli` commands. The `*.jsonl` scripts are the evidence inputs.

@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 3.20)
 
 project(ServingObservatory
@@ -45,7 +46,9 @@ add_library(ServingObservatory STATIC
 if(WIN32)
   target_link_libraries(ServingObservatory PUBLIC ws2_32)
 endif()
-target_include_directories(ServingObservatory PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(ServingObservatory PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 set_target_properties(ServingObservatory PROPERTIES
   VERSION ${PROJECT_VERSION}
   SOVERSION ${PROJECT_VERSION_MAJOR}
@@ -78,6 +81,38 @@ if(CUDAToolkit_FOUND AND SOBS_BUILD_CUDA)
   target_link_libraries(sobs_cuda_proof PRIVATE ServingObservatory ServingObservatoryCuda)
 endif()
 
+# ---------------------------------------------------------------- install/export
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+install(TARGETS ServingObservatory EXPORT ServingObservatoryTargets
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+configure_package_config_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ServingObservatoryConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/ServingObservatoryConfig.cmake
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ServingObservatory)
+
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/ServingObservatoryConfigVersion.cmake
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY SameMajorVersion)
+
+install(EXPORT ServingObservatoryTargets
+  FILE ServingObservatoryTargets.cmake
+  NAMESPACE ServingObservatory::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ServingObservatory)
+
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/ServingObservatoryConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/ServingObservatoryConfigVersion.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ServingObservatory)
+
 # ---------------------------------------------------------------- tests
 if(SOBS_BUILD_TESTS)
   enable_testing()
@@ -85,4 +120,10 @@ if(SOBS_BUILD_TESTS)
   target_link_libraries(sobs_tests PRIVATE ServingObservatory)
   target_include_directories(sobs_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
   add_test(NAME sobs_tests COMMAND sobs_tests)
+endif()
+
+# ---------------------------------------------------------------- examples
+if(SOBS_BUILD_EXAMPLES)
+  add_executable(example_basic examples/example_basic.cpp)
+  target_link_libraries(example_basic PRIVATE ServingObservatory)
 endif()

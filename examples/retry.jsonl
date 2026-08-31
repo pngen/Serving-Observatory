@@ -1,0 +1,12 @@
+OBS REQUEST 1000 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1
+OBS ADMISSION 1100 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1
+OBS QUEUE_ENTER 1200 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1
+OBS QUEUE_LEAVE 2200 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1
+OBS DISPATCH 2300 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1
+OBS PREFILL_START 2400 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1 input_tokens=256
+OBS FAILURE 2500 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1 reason=preemption
+OBS RETRY 2600 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1 reason=preemption
+OBS PREFILL_END 3600 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1 gpu_ms=0.8
+OBS DECODE_STEP_START 3700 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1 output_tokens=1
+OBS DECODE_STEP_END 3760 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1
+OBS COMPLETION 4000 request=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1 outcome=completed

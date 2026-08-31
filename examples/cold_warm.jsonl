@@ -1,0 +1,10 @@
+OBS REQUEST 1000 request=ccccccccccccccccccccccccccccccc1
+OBS ADMISSION 1100 request=ccccccccccccccccccccccccccccccc1
+OBS DISPATCH 1200 request=ccccccccccccccccccccccccccccccc1
+OBS PREFILL_START 1300 request=ccccccccccccccccccccccccccccccc1 input_tokens=64
+OBS PREFILL_END 2400 request=ccccccccccccccccccccccccccccccc1 gpu_ms=0.9
+OBS MODEL_RESIDENCY 2450 request=ccccccccccccccccccccccccccccccc1 is_warm=false
+OBS KV_MISS 2500 request=ccccccccccccccccccccccccccccccc1
+OBS DECODE_STEP_START 2600 request=ccccccccccccccccccccccccccccccc1 output_tokens=1
+OBS DECODE_STEP_END 2660 request=ccccccccccccccccccccccccccccccc1
+OBS COMPLETION 2700 request=ccccccccccccccccccccccccccccccc1 outcome=completed

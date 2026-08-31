@@ -680,6 +680,7 @@ int cmd_multiprocess(const Args& a) {
 }
 
 // ================================================================== benchmark
+
 int cmd_benchmark(const Args& a) {
     std::string mode = opt(a, "mode", "ingest");
     u64 n = oid(a, "count", 10000);
@@ -694,30 +695,83 @@ int cmd_benchmark(const Args& a) {
             Observation o; o.type=ObsType::REQUEST; o.source=h.source; o.worker=h.worker; o.boot=h.boot;
             o.src_gen=1; o.obs_gen=1; o.epoch=1; o.clock_domain="m"; o.seq=++seq; o.provenance=Provenance::MEASURED;
             o.set_id(FieldKeys::RequestId, RequestId(Id128::from_u64(i)).raw());
-            o.id=ObservationId(Id128::derive(0xB1, reinterpret_cast<const servingobs::byte*>(&seq), sizeof(seq)));
+            o.id=derive_observation_id(h.source.raw(), h.worker.raw(), h.boot.raw(), seq, o.type);
             coord.ingest(o);
         }
         auto t1 = std::chrono::steady_clock::now();
         double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
-        std::printf("ingest count=%llu time_ms=%.2f ops_per_sec=%.0f\n",
-                    (unsigned long long)n, ms, ms > 0 ? n / (ms / 1000.0) : 0.0);
+        std::printf("ingest count=%llu time_ms=%.2f ops_per_sec=%.0f\n", (unsigned long long)n, ms, ms > 0 ? n/(ms/1000.0) : 0.0);
+    } else if (mode == "json") {
+        u64 seq = 0; auto t0 = std::chrono::steady_clock::now();
+        for (u64 i = 0; i < n; ++i) {
+            Observation o; o.type=ObsType::REQUEST; o.seq=++seq; o.provenance=Provenance::MEASURED;
+            o.set_id(FieldKeys::RequestId, RequestId(Id128::from_u64(i)).raw());
+            o.id=derive_observation_id(Id128::from_u64(1), Id128::from_u64(1), Id128::from_u64(1), seq, o.type);
+            std::string tmp = observation_to_json(o).to_canonical(); (void)tmp;
+        }
+        auto t1 = std::chrono::steady_clock::now();
+        double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
+        std::printf("json count=%llu time_ms=%.2f ops_per_sec=%.0f\n", (unsigned long long)n, ms, ms>0 ? n/(ms/1000.0) : 0.0);
+    } else if (mode == "persist") {
+        Coordinator coord; coord.set_epoch(1);
+        HelloPayload h; h.source=SourceId(Id128::from_u64(1)); h.worker=WorkerId(Id128::from_u64(1));
+        h.boot=WorkerBootId(Id128::make(1,1)); h.src_gen=1; h.obs_gen=1; h.epoch=1;
+        coord.register_hello(h);
+        u64 seq = 0;
+        for (u64 i = 0; i < n; ++i) {
+            Observation o; o.type=ObsType::REQUEST; o.source=h.source; o.worker=h.worker; o.boot=h.boot;
+            o.src_gen=1; o.obs_gen=1; o.epoch=1; o.clock_domain="m"; o.seq=++seq; o.provenance=Provenance::MEASURED;
+            o.set_id(FieldKeys::RequestId, RequestId(Id128::from_u64(i)).raw());
+            o.id=derive_observation_id(h.source.raw(), h.worker.raw(), h.boot.raw(), seq, o.type);
+            coord.ingest(o);
+        }
+        auto t0 = std::chrono::steady_clock::now();
+        auto saved = save_archive(coord, "bench_data/bench.sobs");
+        auto loaded = load_archive("bench_data/bench.sobs", true);
+        auto t1 = std::chrono::steady_clock::now();
+        double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
+        std::printf("persist count=%llu save=%d load=%d time_ms=%.2f\n", (unsigned long long)n, (int)saved.ok(), (int)loaded.ok(), ms);
+    } else if (mode == "concurrent") {
+        u64 threads = oid(a, "threads", 8);
+        auto t0 = std::chrono::steady_clock::now();
+        std::vector<std::thread> ths;
+        for (u64 th = 0; th < threads; ++th) {
+            ths.emplace_back([th, n, threads]() {
+                Coordinator coord; coord.set_epoch(1);
+                HelloPayload h; h.source=SourceId(Id128::from_u64(1)); h.worker=WorkerId(Id128::from_u64(1));
+                h.boot=WorkerBootId(Id128::make(1,1)); h.src_gen=1; h.obs_gen=1; h.epoch=1;
+                coord.register_hello(h);
+                u64 seq = 0;
+                for (u64 i = th; i < n; i += threads) {
+                    Observation o; o.type=ObsType::REQUEST; o.source=h.source; o.worker=h.worker; o.boot=h.boot;
+                    o.src_gen=1; o.obs_gen=1; o.epoch=1; o.clock_domain="m"; o.seq=++seq; o.provenance=Provenance::MEASURED;
+                    o.set_id(FieldKeys::RequestId, RequestId(Id128::from_u64(i)).raw());
+                    o.id=derive_observation_id(h.source.raw(), h.worker.raw(), h.boot.raw(), seq + 1000000000u * th, o.type);
+                    coord.ingest(o);
+                }
+            });
+        }
+        for (auto& th : ths) th.join();
+        auto t1 = std::chrono::steady_clock::now();
+        double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
+        std::printf("concurrent count=%llu threads=%llu time_ms=%.2f ops_per_sec=%.0f\n", (unsigned long long)n, (unsigned long long)threads, ms, ms>0 ? n/(ms/1000.0) : 0.0);
     } else if (mode == "replay") {
         std::vector<Observation> ev; u64 seq = 0;
         for (u64 i = 0; i < n; ++i) {
             Observation o; o.type=ObsType::REQUEST; o.seq=++seq; o.provenance=Provenance::MEASURED;
             o.set_id(FieldKeys::RequestId, RequestId(Id128::from_u64(i)).raw());
-            o.id=ObservationId(Id128::derive(0xB2, reinterpret_cast<const servingobs::byte*>(&seq), sizeof(seq)));
+            o.id=derive_observation_id(Id128::from_u64(1), Id128::from_u64(1), Id128::from_u64(1), seq, o.type);
             ev.push_back(o);
         }
         auto t0 = std::chrono::steady_clock::now();
         auto rp = replay(ev);
         auto t1 = std::chrono::steady_clock::now();
-        std::printf("replay count=%llu traces=%llu time_ms=%.2f\n",
-                    (unsigned long long)n, (unsigned long long)rp.request_trace_count,
+        std::printf("replay count=%llu traces=%llu time_ms=%.2f\n", (unsigned long long)n, (unsigned long long)rp.request_trace_count,
                     std::chrono::duration<double, std::milli>(t1 - t0).count());
     } else { std::fprintf(stderr, "benchmark: unknown mode %s\n", mode.c_str()); return 2; }
     return 0;
 }
+
 
 int cli_main(int argc, char** argv) {
     if (argc < 2) { print_usage(argv[0]); return 1; }
