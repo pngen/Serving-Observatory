@@ -35,6 +35,14 @@ Result<SourceAuthority> SourceRegistry::register_source(
             a.health = o.has_health ? o.health : a.health;
             return Result<SourceAuthority>::Ok(a);
         }
+        // Anything else must be a fresh boot: a new WorkerBootId with strictly
+        // higher source and observation generations. A replayed or older
+        // registration never takes authority back from the current boot.
+        if (!force_reassign_boot && (o.boot == a.boot || o.src_gen <= a.src_gen || o.obs_gen <= a.obs_gen)) {
+            return Result<SourceAuthority>::Err("stale registration: a fresh boot needs a new boot id and generations above " +
+                                                std::to_string(a.src_gen) + "/" + std::to_string(a.obs_gen) +
+                                                " of boot " + a.boot.to_hex());
+        }
     }
     SourceAuthority a;
     a.source = o.source;

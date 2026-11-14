@@ -116,7 +116,7 @@ install(FILES
 # ---------------------------------------------------------------- tests
 if(SOBS_BUILD_TESTS)
   enable_testing()
-  add_executable(sobs_tests tests/test_main.cpp)
+  add_executable(sobs_tests tests/test_main.cpp tests/test_regression.cpp)
   target_link_libraries(sobs_tests PRIVATE ServingObservatory)
   target_include_directories(sobs_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
   add_test(NAME sobs_tests COMMAND sobs_tests)

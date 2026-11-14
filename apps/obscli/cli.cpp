@@ -607,6 +607,12 @@ int cmd_multiprocess(const Args& a) {
     std::string coord_out = dir + "/coord.sobs";
     std::string manifest_path = dir + "/manifest.json";
     std::string stop_file = dir + "/stop.marker";
+    // An earlier run's leftovers in this directory would corrupt the run: its
+    // stop marker stops the new coordinator at once, and its archive would be
+    // read as this run's result if the coordinator never wrote one.
+    std::remove(stop_file.c_str());
+    std::remove(coord_out.c_str());
+    std::remove(manifest_path.c_str());
     u16 port = static_cast<u16>(oid(a, "port", 43822));
     std::string coord_args = "serve --host 127.0.0.1 --port " + std::to_string(port) + " --epoch " + std::to_string(epoch) +
                              " --out " + coord_out + " --manifest " + manifest_path +

@@ -14,6 +14,8 @@ namespace servingobs {
 
 namespace {
 void ensure_wsa() { wsa_startup(); }
+// recv_exact's error when the receive timeout passed before any byte arrived.
+constexpr const char* kIdleTimeout = "recv timeout";
 }
 
 bool wsa_startup() {
@@ -112,7 +114,8 @@ Result<bytes> TcpStream::recv_exact(std::size_t n) {
         if (r == 0) return Result<bytes>::Err("peer closed during recv");
         if (r == SOCKET_ERROR) {
             int e = WSAGetLastError();
-            if (e == WSAEWOULDBLOCK || e == WSAETIMEDOUT) return Result<bytes>::Err("recv timeout");
+            if (e == WSAEWOULDBLOCK || e == WSAETIMEDOUT)
+                return Result<bytes>::Err(out.empty() ? kIdleTimeout : "recv timeout inside a read");
             return Result<bytes>::Err("recv failed: " + last_wsa_error(e));
         }
         out.insert(out.end(), reinterpret_cast<byte*>(tmp), reinterpret_cast<byte*>(tmp + r));
@@ -123,9 +126,11 @@ Result<bytes> TcpStream::recv_exact(std::size_t n) {
 Result<std::optional<bytes>> TcpStream::recv_frame() {
     auto lenres = recv_exact(4);
     if (!lenres.ok()) {
-        // Distinguish clean close from errors: a 0-byte read returns Err with
-        // "peer closed" — treat transient timeout as empty too.
-        return Result<std::optional<bytes>>::Ok(std::nullopt);
+        // No frame started before the receive timeout: the peer is idle. A
+        // close, an error, or a frame cut short ends the stream instead, so a
+        // partly read frame is never mistaken for an idle one.
+        if (lenres.error() == kIdleTimeout) return Result<std::optional<bytes>>::Ok(std::nullopt);
+        return Result<std::optional<bytes>>::Err(lenres.error());
     }
     const bytes& hdr = lenres.value();
     u32 len = 0;

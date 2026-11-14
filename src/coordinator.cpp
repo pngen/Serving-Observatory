@@ -21,6 +21,11 @@ void Coordinator::set_epoch(CoordinatorEpoch e) {
 
 Result<SourceAuthority> Coordinator::register_hello(const HelloPayload& h) {
     std::lock_guard<std::mutex> lk(mu_);
+    // A registration from an older coordinator epoch is stale.
+    if (h.epoch < epoch_) {
+        return Result<SourceAuthority>::Err("stale epoch " + std::to_string(h.epoch) + " < coordinator epoch " +
+                                            std::to_string(epoch_));
+    }
     Observation o;
     o.type = ObsType::REQUEST;
     o.source = h.source;
@@ -49,9 +54,16 @@ IngestResult Coordinator::ingest(const Observation& o) {
         stale_.push_back({ o, r.reason });
         return r;
     }
-    // Authority validation.
+    // Authority validation. An observation from an older coordinator epoch
+    // never mutates current state, whatever epoch its source registered under.
     string reason;
-    AuthorityDecision d = registry_.validate(o, reason);
+    AuthorityDecision d = AuthorityDecision::ACCEPTED;
+    if (o.epoch < epoch_) {
+        d = AuthorityDecision::STALE_EPOCH;
+        reason = "stale epoch " + std::to_string(o.epoch) + " < coordinator epoch " + std::to_string(epoch_);
+    } else {
+        d = registry_.validate(o, reason);
+    }
     if (d != AuthorityDecision::ACCEPTED) {
         r.accepted = false;
         r.decision = static_cast<u8>(d);
@@ -157,13 +169,13 @@ void CoordinatorServer::handle_client(TcpStream stream) {
     // finally performs network I/O (send) again — never while holding the lock.
     for (;;) {
         auto fr = stream.recv_frame();
-        if (!fr.ok()) { break; }
+        if (!fr.ok()) { break; }  // peer closed, error, or a frame cut short
         if (!fr.value()) {
-            // peer closed or timeout.
+            // Idle: no frame started within the receive timeout (accepted
+            // sockets inherit the listener's). Keep the connection unless the
+            // server is stopping; never read bytes outside the framing.
             if (stop_requested_.load()) break;
-            auto more = stream.recv_some(1);
-            if (more.ok() && more.value().has_value()) continue; // transient
-            break;
+            continue;
         }
         auto frame = Frame::decode(fr.value().value());
         if (!frame.ok()) {
