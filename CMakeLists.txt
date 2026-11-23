@@ -72,6 +72,12 @@ find_package(CUDAToolkit QUIET)
 if(CUDAToolkit_FOUND AND SOBS_BUILD_CUDA)
   enable_language(CUDA)
   add_library(ServingObservatoryCuda STATIC cuda/cuda_proof.cu)
+  # The CUDA runtime CMake links by default is built against the static C runtime.
+  # Without this, every program linked with the CUDA code gets LNK4098 (LIBCMT
+  # conflicts with the DLL runtime the project uses).
+  if(MSVC)
+    target_link_options(ServingObservatoryCuda PUBLIC /NODEFAULTLIB:LIBCMT)
+  endif()
   target_link_libraries(ServingObservatoryCuda PUBLIC ServingObservatory)
   set_target_properties(ServingObservatoryCuda PROPERTIES CUDA_ARCHITECTURES "120")
   target_include_directories(ServingObservatoryCuda PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
